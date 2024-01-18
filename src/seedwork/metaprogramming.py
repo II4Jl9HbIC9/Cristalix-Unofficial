@@ -25,8 +25,44 @@ if typing.TYPE_CHECKING:
     AnyType: typing.TypeAlias = typing.Type[typing.Any]
 
 
+@typing.overload
 def get_type_hints(
-    obj: typing.Callable[[], typing.Any], key: typing.Optional[str] = None, first: bool = False
+    obj: typing.Callable[[], typing.Any],
+    first: bool = False,
+    pop_first: bool = False
+) -> typing.Mapping[str, AnyType]:
+    ...
+
+@typing.overload
+def get_type_hints(
+    obj: typing.Callable[[], typing.Any],
+    key: str,
+    first: bool = False,
+    pop_first: bool = False
+) -> AnyType:
+    ...
+
+@typing.overload
+def get_type_hints(
+    obj: typing.Callable[[], typing.Any],
+    first: bool = True,
+    pop_first: bool = False
+) -> AnyType:
+    ...
+
+@typing.overload
+def get_type_hints(
+    obj: typing.Callable[[], typing.Any],
+    pop_first: bool = True
+) -> typing.Mapping[str, AnyType]:
+    ...
+
+
+def get_type_hints(
+    obj: typing.Callable[[], typing.Any],
+    key: typing.Optional[str] = None,
+    first: bool = False,
+    pop_first: bool = False,
 ) -> typing.Union[AnyType, typing.Mapping[str, AnyType]]:
     """Получает типы аннотаций аргументов функции.
 
@@ -40,6 +76,8 @@ def get_type_hints(
         соответствовать ключу.
     first : bool
         Если True, вернёт тип аннотации первого аргумента.
+    pop_first : bool
+        Если True, вернёт все параметры, исключив первый.
 
     Raises
     ------
@@ -61,10 +99,14 @@ def get_type_hints(
         first_value = types_[list(types_.keys())[0]]
         return first_value
 
+    if pop_first:
+        types_.pop(list(types_.keys())[0])
+        return types_
+
     if key is not None:
         value = types_.get(key)
         if value is None:
-            raise KeyError(f"Can't find key {key!r} in function annotations.")
+            raise KeyError(f"Can't find key {key!r} in object annotations.")
 
         return value
 

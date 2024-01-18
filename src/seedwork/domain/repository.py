@@ -23,8 +23,8 @@ __all__: typing.Sequence[str] = (
 import abc
 import typing
 
-from seedwork.domain.entity import Entity
-from seedwork.domain.entity_uuid import EntityId
+from src.seedwork.domain.entity import Entity
+from src.seedwork.domain.entity_uuid import EntityId
 
 if typing.TYPE_CHECKING:
     from src.seedwork.domain.event import Event

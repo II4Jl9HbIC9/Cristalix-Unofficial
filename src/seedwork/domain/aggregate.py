@@ -29,9 +29,13 @@ if typing.TYPE_CHECKING:
 class Aggregate(Entity, BusinessRuleValidationMixin):
     """Основной класс для реализации агрегатов в контексте DDD."""
 
+    __slots__: typing.Sequence[str] = ()
+
 
 class EventSourcedAggregate(Aggregate, abc.ABC):
     """Основной класс для реализации подхода Event Sourcing в DDD агрегатах."""
+
+    __slots__: typing.Sequence[str] = ("_events",)
 
     def __init__(self) -> None:
         self._events = []
