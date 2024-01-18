@@ -39,7 +39,7 @@ class EventSourcedEvent(Event):
     aggregate_uuid: EntityId
     """Уникальный идентификатор агрегата, которому принадлежит событие."""
 
-    occurred_at: datetime = dataclasses.field(default_factory=datetime.datetime.utcnow)
+    occurred_at: datetime.datetime = dataclasses.field(default_factory=datetime.datetime.utcnow)
     """Время, когда событие произошло. По умолчанию равно текущему времени по UTC."""
 
     @classmethod

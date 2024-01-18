@@ -13,7 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
-__all__: typing.Seqeuence[str] = ("CommandResult", "CommandHandlerType",)
+__all__: typing.Sequence[str] = ("CommandResult", "CommandHandlerType",)
 
 import dataclasses
 import typing
@@ -26,7 +26,7 @@ if typing.TYPE_CHECKING:
     from src.seedwork.hints import ExcInfo
     from src.seedwork.hints import OptExcInfo
 
-    CommandErrors: typing.TypeAlias = tuple[str, BaseException, ExcInfo]
+    CommandErrors: typing.TypeAlias = tuple[str, typing.Optional[BaseException], ExcInfo]
 
 CommandHandlerType: typing.TypeAlias = typing.Callable[..., typing.Awaitable["CommandResult"]]
 
@@ -55,7 +55,9 @@ class CommandResult:
         """Вернёт True, если результат выполнения команды не содержит ошибок."""
         return not self.has_errors()
 
-    def add_error(self, message: str, exception: BaseException, exception_info: OptExcInfo) -> None:
+    def add_error(
+        self, message: str, exception: typing.Optional[BaseException], exception_info: OptExcInfo,
+    ) -> None:
         """Добавляет ошибку к текущему результату исполнения команды.
 
         Parameters
@@ -63,7 +65,7 @@ class CommandResult:
         message : str
             Сообщение об ошибке, произошедшей в результате
             выполнения команды.
-        exception : BaseException
+        exception : Optional[BaseException]
             Инстанс ошибки, возникшей в результате выполнения
             указанной команды.
         exception_info : OptExcInfo

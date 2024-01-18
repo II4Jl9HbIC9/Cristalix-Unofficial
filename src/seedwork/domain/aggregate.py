@@ -38,7 +38,7 @@ class EventSourcedAggregate(Aggregate, abc.ABC):
     __slots__: typing.Sequence[str] = ("_events",)
 
     def __init__(self) -> None:
-        self._events = []
+        self._events: list[EventSourcedEvent] = []
 
     @property
     @typing.final

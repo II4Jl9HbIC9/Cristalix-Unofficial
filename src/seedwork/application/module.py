@@ -47,29 +47,29 @@ if typing.TYPE_CHECKING:
 
 _CallableT = typing.TypeVar("_CallableT", bound=typing.Callable[..., typing.Any])
 _KeyT = typing.TypeVar("_KeyT")
-_ValueT_co = typing.TypeVar("_ValueT_co", covariant=True)
+_ValueT = typing.TypeVar("_ValueT")
 
 
-class DependencyProvider(abc.ABC, typing.Generic[_KeyT, _ValueT_co]):
+class DependencyProvider(abc.ABC, typing.Generic[_KeyT, _ValueT]):
     """Интерфейс для менеджмента зависимостями."""
 
     __slots__: typing.Sequence[str] = ()
 
     @abc.abstractmethod
-    def register_dependency(self, identifier: _KeyT, dependency: _ValueT_co) -> None:
+    def register_dependency(self, identifier: _KeyT, dependency: _ValueT) -> None:
         """Регистрирует зависимость в хранилище.
 
         Parameters
         ----------
         identifier : _KeyT
             Ключ, по которому будет записана зависимость.
-        dependency : _ValueT_co
+        dependency : _ValueT
             Инстанс зависимости, которую нужно зарегистрировать.
         """
         ...
 
     @abc.abstractmethod
-    def get_dependency(self, identifier: _KeyT) -> _ValueT_co:
+    def get_dependency(self, identifier: _KeyT) -> _ValueT:
         """Получает зависимость по ключу.
 
         Parameters
@@ -79,7 +79,7 @@ class DependencyProvider(abc.ABC, typing.Generic[_KeyT, _ValueT_co]):
 
         Returns
         -------
-        _ValueT_co
+        _ValueT
             Зависимость, если такова присутствует.
 
         Raises
@@ -90,7 +90,9 @@ class DependencyProvider(abc.ABC, typing.Generic[_KeyT, _ValueT_co]):
         """
         ...
 
-    def _resolve_arguments(self, callable_parameters: typing.Mapping[str, typing.Any]) -> dict:
+    def _resolve_arguments(
+        self, callable_parameters: typing.Mapping[str, typing.Any],
+    ) -> typing.MutableMapping[str, typing.Any]:
         kwargs = {}
         for param_name, param_type in callable_parameters.items():
             if param_type is inspect.Parameter.empty:
@@ -150,9 +152,10 @@ class TransactionContext:
         self._overrides = overrides
         self._dependency_provider = application.dependency_provider
         self._task = None
-        self._next_commands = []
-        self._integration_events = []
+        self._next_commands: list[Command] = []
+        self._integration_events: list[IntegrationEvent] = []
 
+    @typing.no_type_check
     def __enter__(self) -> typing.Self:
         self._application._on_enter_transaction_context(self)
         return self
@@ -170,6 +173,7 @@ class TransactionContext:
     ) -> None:
         ...
 
+    @typing.no_type_check
     def __exit__(
         self,
         exc_type: typing.Optional[type[BaseException]],
@@ -265,7 +269,7 @@ class TransactionContext:
                 self.collect_integration_event(event)
 
             elif isinstance(event, Event):
-                event_results = self.handle_domain_event(event)
+                event_results = await self.handle_domain_event(event)
                 self._next_commands.extend(event_results.commands)
                 event_queue.extend(event_results.events)
 
@@ -499,7 +503,7 @@ class Application(ApplicationModule):
         self,
         name: str,
         version: float,
-        dependency_provider: typing.Optional[DependencyProvider] = None,
+        dependency_provider: DependencyProvider[typing.Any, typing.Any],
     ) -> None:
         super().__init__(name, version)
         self._dependency_provider = dependency_provider
@@ -508,16 +512,16 @@ class Application(ApplicationModule):
         self._modules: typing.Set[ApplicationModule] = {self}
 
     @property
-    def dependency_provider(self) -> typing.Optional[DependencyProvider]:
+    def dependency_provider(self) -> DependencyProvider[typing.Any, typing.Any]:
         """Возвращает инстанс текущего менеджера зависимостей."""
         return self._dependency_provider
 
-    def configure_dependency_provider(self, instance: DependencyProvider) -> None:
+    def configure_dependency_provider(self, instance: DependencyProvider[typing.Any, typing.Any]) -> None:
         """Устанавливает новый менеджер зависимостей.
 
         Parameters
         ----------
-        instance : DependencyProvider
+        instance : DependencyProvider[Any, Any]
             Инстанс нового менеджера зависимостей.
 
         Raises

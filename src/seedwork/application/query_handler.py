@@ -22,10 +22,10 @@ import sys
 if typing.TYPE_CHECKING:
     from src.seedwork.hints import OptExcInfo
 
-    QueryErrors: typing.TypeAlias = tuple[str, BaseException, OptExcInfo]
+    QueryErrors: typing.TypeAlias = tuple[str, typing.Optional[BaseException], OptExcInfo]
 
 
-QueryHandlerType: typing.TypeAlias = typing.Callable[..., typing.Awaitable["QueryResult"]]
+QueryHandlerType: typing.TypeAlias = typing.Callable[..., typing.Awaitable["QueryResult[typing.Any]"]]
 """Сокращённый алиас к типу обработчика запросов."""
 
 _T = typing.TypeVar("_T")
@@ -61,7 +61,7 @@ class QueryResult(typing.Generic[_T]):
         cls,
         message: str = "Failure",
         exception: typing.Optional[BaseException] = None,
-    ) -> QueryResult:
+    ) -> QueryResult[_T]:
         """Фабричный метод для создания респонса при возникновении
         ошибок в результате поискового запроса.
 
@@ -80,7 +80,7 @@ class QueryResult(typing.Generic[_T]):
         return result
 
     @classmethod
-    def success(cls, payload: typing.Optional[_T] = None) -> QueryResult:
+    def success(cls, payload: typing.Optional[_T] = None) -> QueryResult[_T]:
         """Фабричный метод для создания респонса при успешном выполнении
         поискового запроса.
 

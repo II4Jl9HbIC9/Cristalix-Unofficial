@@ -60,7 +60,7 @@ class BusinessRuleValidationMixin:
 
     __slots__: typing.Sequence[str] = ()
 
-    def assert_invariants(self, *rules: typing.Unpack[BusinessRule]) -> None:
+    def assert_invariants(self, *rules: BusinessRule) -> None:
         """Проверяет, соблюдены ли все указанные инварианты.
 
         Parameters
@@ -93,7 +93,7 @@ class BusinessRuleValidationError(Exception):
 
     __slots__: typing.Sequence[str] = ("_rules",)
 
-    def __init__(self, *rules: typing.Unpack[BusinessRule]) -> None:
+    def __init__(self, *rules: BusinessRule) -> None:
         self._rules = rules
         super().__init__(self._render_broken_rules())
 

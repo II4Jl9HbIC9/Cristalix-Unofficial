@@ -29,11 +29,11 @@ from src.seedwork.domain.entity_uuid import EntityId
 if typing.TYPE_CHECKING:
     from src.seedwork.domain.event import Event
 
-EntityT_co = typing.TypeVar("EntityT_co", bound=Entity, covariant=True)
+EntityT = typing.TypeVar("EntityT", bound=Entity)
 EntityIdT = typing.TypeVar("EntityIdT", bound=EntityId)
 
 
-class EventlessRepository(typing.Generic[EntityIdT, EntityT_co], abc.ABC):
+class EventlessRepository(typing.Generic[EntityIdT, EntityT], abc.ABC):
     """
     Интерфейс для стандартных реализаций репозиториев,
     которые не нуждаются в использовании ивентов.
@@ -42,7 +42,7 @@ class EventlessRepository(typing.Generic[EntityIdT, EntityT_co], abc.ABC):
     __slots__: typing.Sequence[str] = ()
 
     @abc.abstractmethod
-    async def get_by_id(self, entity_id: EntityIdT) -> typing.Optional[EntityT_co]:
+    async def get_by_id(self, entity_id: EntityIdT) -> typing.Optional[EntityT]:
         """Получает обьект сущности/агрегата по его айди.
 
         Parameters
@@ -52,14 +52,14 @@ class EventlessRepository(typing.Generic[EntityIdT, EntityT_co], abc.ABC):
 
         Returns
         -------
-        Optional[EntityT_co]
+        Optional[EntityT]
             Сущность/агрегат, None, в случае если по результату
             запроса ничего не найдено.
         """
         ...
 
     @abc.abstractmethod
-    async def insert(self, entity: EntityT_co) -> None:
+    async def insert(self, entity: EntityT) -> None:
         """Заносит обьект в хранилище.
 
         Метод реализован отдельно от логики сохранения уже
@@ -74,7 +74,7 @@ class EventlessRepository(typing.Generic[EntityIdT, EntityT_co], abc.ABC):
         ...
 
     @abc.abstractmethod
-    async def save(self, entity: EntityT_co) -> None:
+    async def save(self, entity: EntityT) -> None:
         """Обновляет состояние уже существующего обьекта.
 
         Raises
@@ -97,7 +97,7 @@ class EventlessRepository(typing.Generic[EntityIdT, EntityT_co], abc.ABC):
         ...
 
 
-class EventRepository(EventlessRepository[EntityIdT, EntityT_co], abc.ABC):
+class EventRepository(EventlessRepository[EntityIdT, EntityT], abc.ABC):
     """Реализация репозитория, взаимодействующего с архитектурой ивентов."""
 
     __slots__: typing.Sequence[str] = ()

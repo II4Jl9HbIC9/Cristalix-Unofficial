@@ -31,7 +31,7 @@ if typing.TYPE_CHECKING:
     from src.seedwork.application.command import Command
     from src.seedwork.hints import ExcInfo
 
-    EventErrors: typing.TypeAlias = tuple[str, BaseException, ExcInfo]
+    EventErrors: typing.TypeAlias = tuple[str, typing.Optional[BaseException], ExcInfo]
 
 EventHandlerType: typing.TypeAlias = typing.Callable[..., typing.Awaitable["EventResult"]]
 
@@ -45,7 +45,7 @@ class EventId(EntityId):
 class EventResult:
     """Результат выполнения события (успех или провал) его обработчика."""
 
-    event_id: EventId = dataclasses.field(default_factory=EventId.next_id)
+    event_id: typing.Optional[EventId] = dataclasses.field(default=None)
     """Айди обработанного события."""
 
     payload: typing.Any = dataclasses.field(default=None)
@@ -61,6 +61,10 @@ class EventResult:
 
     errors: list[EventErrors] = dataclasses.field(default_factory=list)
     """Ошибки, возникшие в результате обработки данного события."""
+
+    def __post_init__(self) -> None:
+        if self.event_id is None:
+            self.event_id = EventId.next_id()
 
     def has_errors(self) -> bool:
         """Вернёт True, если результат исполнения события содержит ошибки."""
