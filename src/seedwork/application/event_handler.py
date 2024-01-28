@@ -51,8 +51,8 @@ class EventResult:
     payload: typing.Any = dataclasses.field(default=None)
     """Дополнительная информация, полученная при обработке события."""
 
-    command: Command =  dataclasses.field(default=None)
-    """Команда которая будет выполнена, как результат выполнения 
+    command: Command = dataclasses.field(default=None)
+    """Команда которая будет выполнена, как результат выполнения
     этого ивента (эксперементально).
     """
 

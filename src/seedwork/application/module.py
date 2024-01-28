@@ -16,27 +16,27 @@ from __future__ import annotations
 __all__: typing.Sequence[str] = (
     "ApplicationModule",
     "Application",
-    "DependencyProvider",
     "TransactionContext",
 )
 
-import abc
-import inspect
+import importlib
 import typing
 import types
+import collections
 
 from src.seedwork import metaprogramming
 from src.seedwork import util
+from src.seedwork.domain.event import Event
 from src.seedwork.application.event import IntegrationEvent
 from src.seedwork.application.event_handler import EventResult
 from src.seedwork.application.event_handler import EventResultSet
 from src.seedwork.application.query_handler import QueryResult
 from src.seedwork.application.command_handler import CommandResult
+from src.seedwork.application.ioc import DependencyProvider
 
 if typing.TYPE_CHECKING:
     from src.seedwork.application.command import Command
     from src.seedwork.application.query import Query
-    from src.seedwork.domain.event import Event
     from src.seedwork.application.event_handler import EventHandlerType
     from src.seedwork.application.query_handler import QueryHandlerType
     from src.seedwork.application.command_handler import CommandHandlerType
@@ -46,84 +46,6 @@ if typing.TYPE_CHECKING:
     _CommandHandlerT = typing.TypeVar("_CommandHandlerT", bound=CommandHandlerType)
 
 _CallableT = typing.TypeVar("_CallableT", bound=typing.Callable[..., typing.Any])
-_KeyT = typing.TypeVar("_KeyT")
-_ValueT = typing.TypeVar("_ValueT")
-
-
-class DependencyProvider(abc.ABC, typing.Generic[_KeyT, _ValueT]):
-    """Интерфейс для менеджмента зависимостями."""
-
-    __slots__: typing.Sequence[str] = ()
-
-    @abc.abstractmethod
-    def register_dependency(self, identifier: _KeyT, dependency: _ValueT) -> None:
-        """Регистрирует зависимость в хранилище.
-
-        Parameters
-        ----------
-        identifier : _KeyT
-            Ключ, по которому будет записана зависимость.
-        dependency : _ValueT
-            Инстанс зависимости, которую нужно зарегистрировать.
-        """
-        ...
-
-    @abc.abstractmethod
-    def get_dependency(self, identifier: _KeyT) -> _ValueT:
-        """Получает зависимость по ключу.
-
-        Parameters
-        ----------
-        identifier : _KeyT
-            Ключ, по которому необходимо получить зависимость.
-
-        Returns
-        -------
-        _ValueT
-            Зависимость, если такова присутствует.
-
-        Raises
-        ------
-        KeyError
-            Возбуждается в случае, если зависимость по указанному
-            ключу не найдена.
-        """
-        ...
-
-    def _resolve_arguments(
-        self, callable_parameters: typing.Mapping[str, typing.Any],
-    ) -> typing.MutableMapping[str, typing.Any]:
-        kwargs = {}
-        for param_name, param_type in callable_parameters.items():
-            if param_type is inspect.Parameter.empty:
-                raise KeyError(f"No type hints found for param {param_type!r}.")
-
-            kwargs[param_name] = self.get_dependency(param_type)  # KeyError
-
-        return kwargs
-
-    def dependencies_from_callable(
-        self, callable_: typing.Callable[..., typing.Any], **overrides: typing.Any,
-    ) -> typing.Mapping[str, typing.Any]:
-        """Получает зависимости от типов аннотаций вызываемого обьекта.
-
-        Parameters
-        ----------
-        callable_ : Callable[..., Any]
-            Вызываемый обьект, для которого нужно получить зависимости.
-        overrides : Any
-            Переопределение старых/определение новых зависимостей для
-            получения зависимостей вызываемого обьекта.
-
-        Returns
-        -------
-        Mapping[str, Any]
-            Полученные зависимости вызываемого обьекта.
-        """
-        handler_type_hints = metaprogramming.get_type_hints(callable_, pop_first=True)
-        dependencies = self._resolve_arguments(handler_type_hints)
-        dependencies.update(**overrides)
-        return dependencies
 
 
 class TransactionContext:
@@ -294,6 +216,8 @@ class TransactionContext:
             В случае, если полученный результат не является EventResultSet.
         """
         event_results = []
+        print(self._application.get_event_handlers(event))
+        print(self._application._event_handlers)
         for handler_func in self._application.get_event_handlers(event):
             dependencies = self._dependency_provider.dependencies_from_callable(
                 handler_func, **self._overrides,
@@ -341,7 +265,7 @@ class ApplicationModule:
         self._name = name
         self._version = version
         self._command_handlers: dict[type[Command], CommandHandlerType] = {}
-        self._event_handlers: dict[type[Event], EventHandlerType] = {}
+        self._event_handlers: dict[type[Event], list[EventHandlerType]] = collections.defaultdict(list)
         self._query_handlers: dict[type[Query], QueryHandlerType] = {}
 
     @property
@@ -353,6 +277,9 @@ class ApplicationModule:
     def version(self) -> float:
         """Текущая версия модуля."""
         return self._version
+
+    def import_from(self, path: str) -> None:
+        importlib.import_module(path)
 
     def register_query_handler(
         self,
@@ -409,7 +336,7 @@ class ApplicationModule:
         """
         if (event := event_cls) is None:
             event = metaprogramming.get_type_hints(handler, first=True)
-        self._event_handlers[event] = handler
+        self._event_handlers[event].append(handler)
 
     def query_handler(
         self, query_cls: typing.Optional[type[Query]] = None,

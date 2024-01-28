@@ -42,3 +42,32 @@ class EntityId(ValueObject):
         """Фабричный метод для создания случайного айди в формате uuid4."""
         identifier = uuid.uuid4()
         return cls(integer=identifier.int, string=str(identifier), hex=identifier.hex)
+
+    @classmethod
+    def from_int(cls, integer: int, /) -> EntityId:
+        return EntityId(integer=integer, string=str(integer), hex=hex(integer))
+
+    @classmethod
+    def from_str(cls, string: str, /) -> EntityId:
+        if string.isdigit():
+            return cls.from_int(int(string))
+
+        obj = uuid.UUID(string)
+        return cls(
+            integer=obj.int,
+            string=string,
+            hex=obj.hex,
+        )
+
+    def __hash__(self) -> int:
+        return self.integer
+
+    def __eq__(self, other: typing.Any) -> bool:
+        if not isinstance(other, EntityId):
+            return NotImplemented
+
+        return (
+            self.integer == other.integer
+            and self.string == other.string
+            and self.hex == other.hex
+        )

@@ -14,13 +14,11 @@
 """События доменного уровня."""
 from __future__ import annotations
 
-__all__: typing.Sequence[str] = ("Event", "EventSourcedEvent")
+__all__: typing.Sequence[str] = ("Event",)
 
 import dataclasses
-import datetime
 import typing
 
-from src.seedwork.domain.entity_uuid import EntityId
 from src.seedwork.domain.value_object import ValueObject
 
 
@@ -28,46 +26,9 @@ from src.seedwork.domain.value_object import ValueObject
 class Event(ValueObject):
     """Основной класс для доменных событий в контексте DDD."""
 
-
-@dataclasses.dataclass(frozen=True, kw_only=True)
-class EventSourcedEvent(Event):
-    """Основной класс для доменных событий в контексте Event Sourcing."""
-
-    type: str
-    """Тип события, характеризующий его суть (как правило, название класса)."""
-
-    aggregate_uuid: EntityId
-    """Уникальный идентификатор агрегата, которому принадлежит событие."""
-
-    occurred_at: datetime.datetime = dataclasses.field(default_factory=datetime.datetime.utcnow)
-    """Время, когда событие произошло. По умолчанию равно текущему времени по UTC."""
-
     @classmethod
-    def default(
-        cls,
-        aggregate_uuid: EntityId,
-        occurred_at: typing.Optional[datetime.datetime] = None,
-        **kwargs: typing.Any,
-    ) -> EventSourcedEvent:
-        """Фабричный метод для инициализации события с
-        по умолчанию заданными атрибутами.
+    def from_dict(cls, mapping: dict[str, typing.Any]) -> Event:
+        pass
 
-        Parameters
-        ----------
-        aggregate_uuid : EntityId
-            Уникальный идентификатор агрегата, которому
-            пренадлежит событие.
-        occurred_at : Optional[datetime]
-            Время, когда событие произошло.
-            По умолчанию равно текущему времени по UTC.
-        kwargs : Any
-            Дополнительный набор аргументов для универсального
-            использования фабрики в дочерних событиях.
-        """
-        kwargs = {}
-        if occurred_at is not None:
-            kwargs["occurred_at"] = occurred_at
-
-        event = cls(type=cls.__name__, aggregate_uuid=aggregate_uuid, **kwargs)
-
-        return event
+    def as_dict(self) -> dict[str, typing.Any]:
+        pass

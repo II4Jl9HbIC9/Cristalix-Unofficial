@@ -23,7 +23,7 @@ from src.seedwork.domain.business_rule import BusinessRuleValidationMixin
 from src.seedwork.domain.entity import Entity
 
 if typing.TYPE_CHECKING:
-    from src.seedwork.domain.event import EventSourcedEvent
+    from src.seedwork.domain.event import Event
 
 
 class Aggregate(Entity, BusinessRuleValidationMixin):
@@ -35,20 +35,26 @@ class Aggregate(Entity, BusinessRuleValidationMixin):
 class EventSourcedAggregate(Aggregate, abc.ABC):
     """Основной класс для реализации подхода Event Sourcing в DDD агрегатах."""
 
-    __slots__: typing.Sequence[str] = ("_events",)
+    __slots__: typing.Sequence[str] = ("_events", "_version",)
 
-    def __init__(self) -> None:
-        self._events: list[EventSourcedEvent] = []
+    def __init__(self, version: int) -> None:
+        self._events: list[Event] = []
+        self._version = version
 
     @property
     @typing.final
-    def uncommitted_events(self) -> typing.Sequence[EventSourcedEvent]:
+    def version(self) -> int:
+        return self._version
+
+    @property
+    @typing.final
+    def uncommitted_events(self) -> typing.Sequence[Event]:
         """Последовательность ещё не обработанных событий."""
         uncommitted_events = self._events
         return tuple(uncommitted_events)
 
     @typing.final
-    def register_event(self, event: EventSourcedEvent) -> None:
+    def register_event(self, event: Event) -> None:
         """Регистрирует событие в агрегате.
 
         Parameters
@@ -64,26 +70,26 @@ class EventSourcedAggregate(Aggregate, abc.ABC):
         self._events.clear()
 
     @typing.final
-    def collect_events(self) -> typing.Sequence[EventSourcedEvent]:
+    def collect_events(self) -> typing.Sequence[Event]:
         """Собирает все неприменённые события, делает копию и очищает очередь."""
         events = self._events[:]
         self._clear_events()
         return events
 
     @typing.final
-    def _record_that(self, event: EventSourcedEvent) -> None:
+    def _record_that(self, event: Event) -> None:
         """Регистрирует событие и применяет его к текущему состоянию агрегата."""
         self._reconstruct_from_event(event)
         self.register_event(event)
 
     @typing.final
-    def _reconstruct_from_event(self, event: EventSourcedEvent) -> None:
+    def _reconstruct_from_event(self, event: Event) -> None:
         """Применяет событие к текущему состоянию агрегата."""
         self._aggregate(event)
 
     @functools.singledispatchmethod
     @abc.abstractmethod
-    def _aggregate(self, event: EventSourcedEvent) -> None:
+    def _aggregate(self, event: Event) -> None:
         """Применяет событие к текущему агрегату.
 
         В дочерних классах переопределяется и регистрирует

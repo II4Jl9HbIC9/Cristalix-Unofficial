@@ -1,4 +1,14 @@
+alluka
 hikari
+hikari[speedups]
+hikari[server]
 hikari-tanjun
 attrs
 dependency_injector
+motor
+pydantic-settings
+pydantic
+fake-useragent
+bs4
+httpx
+lxml

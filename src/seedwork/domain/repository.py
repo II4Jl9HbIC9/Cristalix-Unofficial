@@ -16,7 +16,7 @@ from __future__ import annotations
 __all__: typing.Sequence[str] = (
     "EventRepository",
     "EventlessRepository",
-    "EntityT_co",
+    "EntityT",
     "EntityIdT",
 )
 
@@ -40,6 +40,11 @@ class EventlessRepository(typing.Generic[EntityIdT, EntityT], abc.ABC):
     """
 
     __slots__: typing.Sequence[str] = ()
+
+    @abc.abstractmethod
+    async def get_all(self) -> typing.Sequence[EntityT]:
+        """Возвращает все сущности из хранилища."""
+        ...
 
     @abc.abstractmethod
     async def get_by_id(self, entity_id: EntityIdT) -> typing.Optional[EntityT]:

@@ -15,8 +15,12 @@ from __future__ import annotations
 
 __all__: typing.Sequence[str] = ("Query",)
 
+import dataclasses
 import typing
 
+from src.seedwork.domain.value_object import ValueObject
 
-class Query:
+
+@dataclasses.dataclass(frozen=True)
+class Query(ValueObject):
     """Основной класс для создания поисковых запросов."""

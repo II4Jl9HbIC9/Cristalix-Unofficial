@@ -116,7 +116,7 @@ class CommandResult:
         if events is None:
             events = []
 
-        if event:
+        if event is not None:
             events.append(event)
             
         return cls(

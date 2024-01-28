@@ -1,1 +1,1 @@
-web: python bot.py
+beerbot: python src/discord/entrypoint.py
